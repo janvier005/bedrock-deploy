@@ -31,7 +31,7 @@ while getopts "d" opt; do
 done
 
 # Fonction pour la migration
-migrate_script() {
+deploy_script() {
 
     # Clonage de Bedrock dans le répertoire actuel
     git clone https://github.com/roots/bedrock.git .
@@ -126,7 +126,7 @@ EOF
         lando rebuild -y
 
         # Installer WordPress via WP-CLI
-        lando wp core install --url="${LANDO_DOMAIN}" --title="${WEBSITE_TITLE}" --admin_user="${WEBSITE_ADMIN_USER}" --admin_password="${WEBSITE_ADMIN_PASS}" --admin_email="${WEBSITE_ADMIN_EMAIL}" --path=${WEBSITE_WP_CLI_ROOT_PATH}
+        lando wp core install --url="${WEBSITE_URL}" --title="${WEBSITE_TITLE}" --admin_user="${WEBSITE_ADMIN_USER}" --admin_password="${WEBSITE_ADMIN_PASS}" --admin_email="${WEBSITE_ADMIN_EMAIL}" --path=${WEBSITE_WP_CLI_ROOT_PATH}
     else
         # Check if Composer is available globally, if not, install it
         if ! command -v composer &> /dev/null; then
@@ -164,20 +164,20 @@ EOF
 
     if [ ! -f "$HTACCESS_PATH" ]; then
         echo "Création du fichier .htaccess dans le répertoire web..."
-        cat << 'EOF' > "$HTACCESS_PATH"
-    # BEGIN WordPress
-    <IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteBase /
-    RewriteRule ^index\.php$ - [L]
-    RewriteRule ^wp-content/uploads/(.*) ${WEBSITE_APP_ROOT_PATH}/uploads/$1 [QSA,L]
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule . /index.php [L]
-    </IfModule>
-
-    # END WordPress
-    EOF
+        touch "$HTACCESS_PATH"
+    
+        # Write .htaccess content directly to the file
+        echo "# BEGIN WordPress" >> "$HTACCESS_PATH"
+        echo "<IfModule mod_rewrite.c>" >> "$HTACCESS_PATH"
+        echo "RewriteEngine On" >> "$HTACCESS_PATH"
+        echo "RewriteBase /" >> "$HTACCESS_PATH"
+        echo "RewriteRule ^index\.php$ - [L]" >> "$HTACCESS_PATH"
+        echo "RewriteRule ^wp-content/uploads/(.*) ${WEBSITE_APP_ROOT_PATH}/uploads/$1 [QSA,L]" >> "$HTACCESS_PATH"
+        echo "RewriteCond %{REQUEST_FILENAME} !-f" >> "$HTACCESS_PATH"
+        echo "RewriteCond %{REQUEST_FILENAME} !-d" >> "$HTACCESS_PATH"
+        echo "RewriteRule . /index.php [L]" >> "$HTACCESS_PATH"
+        echo "</IfModule>" >> "$HTACCESS_PATH"
+        echo "# END WordPress" >> "$HTACCESS_PATH"
     else
         echo "Le fichier .htaccess existe déjà dans le répertoire web."
     fi
